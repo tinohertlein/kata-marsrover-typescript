@@ -1,6 +1,7 @@
 # The Mars Rover Kata
-
 ![kata-marsrover-typescript](https://github.com/tinohertlein/kata-marsrover-typescript/actions/workflows/ci.yml/badge.svg?event=push)
+
+Credits for this Kata go to [Codurance](https://katalyst.codurance.com/mars-rover)
 
 ## Situation
 
