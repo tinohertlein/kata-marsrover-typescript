@@ -35,7 +35,7 @@ The program's output is the final state of the rover after all the move commands
 The state is represented as a position and a direction, joined by colons to form a string. For example: a rover whose
 state is 2:3:W is at position (2,3), facing west.
 
-If the rover encountered an obstacle on its way, it stops before the obstacle and returns with an error, indicated by
+If the rover encountered an obstacle on its way, the rover stops in front of the obstacle and returns with an error, indicated by
 an 'Err:' prefixed to the state.
 
 ### Examples

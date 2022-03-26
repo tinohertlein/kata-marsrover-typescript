@@ -2,6 +2,7 @@ import Rover, {
     Direction,
     DirectionLetter,
     Grid,
+    Obstacle,
     Plateau,
     Position,
     RoverState,
@@ -35,7 +36,7 @@ describe('Mars Rover should', () => {
     describe('move forward', () => {
         describe('not wrapping around edges', () => {
             const plateau = Plateau.fromGrid(Grid.fromDimensions(10, 10))
-            const position = Position.fromCoordinates(5, 5)
+            const roverPosition = Position.fromCoordinates(5, 5)
 
             it.each([
                 ['N', '5:6:N'],
@@ -46,7 +47,7 @@ describe('Mars Rover should', () => {
                 `one step in direction %s`,
                 (directionLetter: string, expected: string) => {
                     const roverState = new RoverState(
-                        position,
+                        roverPosition,
                         Direction.fromString(directionLetter)
                     )
                     const rover = new Rover(plateau, roverState)
@@ -58,7 +59,7 @@ describe('Mars Rover should', () => {
 
         describe('wrapping around edges', () => {
             const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
-            const position = Position.fromCoordinates(0, 0)
+            const roverPosition = Position.fromCoordinates(0, 0)
 
             it.each([
                 ['N', '0:1:N'],
@@ -69,7 +70,7 @@ describe('Mars Rover should', () => {
                 `one step in direction %s`,
                 (directionLetter: string, expected: string) => {
                     const roverState = new RoverState(
-                        position,
+                        roverPosition,
                         Direction.fromString(directionLetter)
                     )
                     const rover = new Rover(plateau, roverState)
@@ -81,10 +82,10 @@ describe('Mars Rover should', () => {
     })
 
     describe('rotate', () => {
-        describe('left', () => {
-            const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
-            const position = Position.fromCoordinates(0, 0)
+        const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
+        const position = Position.fromCoordinates(0, 0)
 
+        describe('left', () => {
             it.each([
                 ['N', '0:0:W'],
                 ['W', '0:0:S'],
@@ -102,9 +103,6 @@ describe('Mars Rover should', () => {
         })
 
         describe('right', () => {
-            const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
-            const position = Position.fromCoordinates(0, 0)
-
             it.each([
                 ['N', '0:0:E'],
                 ['W', '0:0:N'],
@@ -128,18 +126,48 @@ describe('Mars Rover should', () => {
         })
     })
 
+    describe('stop', () => {
+        test('in front of an obstacle', () => {
+            const rover = new Rover(
+                Plateau.fromObstacles([
+                    Obstacle.fromPosition(Position.fromCoordinates(0, 2)),
+                ])
+            )
+
+            expect(rover.navigate('MM')).toEqual('Err:0:1:N')
+        })
+    })
+
     describe('pass acceptance tests', () => {
+        const grid = Grid.fromDimensions(10, 10)
+
         describe('with given input in README.md:', () => {
             test(`''`, () => {
                 expect(new Rover().navigate('')).toEqual('0:0:N')
             })
 
             test(`'MMRMMLM'`, () => {
-                expect(new Rover().navigate('MMRMMLM')).toEqual('2:3:N')
+                const rover = new Rover(Plateau.fromGrid(grid))
+
+                expect(rover.navigate('MMRMMLM')).toEqual('2:3:N')
             })
 
             test(`'MMMMMMMMMM'`, () => {
-                expect(new Rover().navigate('MMMMMMMMMM')).toEqual('0:0:N')
+                const rover = new Rover(Plateau.fromGrid(grid))
+
+                expect(rover.navigate('MMMMMMMMMM')).toEqual('0:0:N')
+            })
+
+            test(`'MMMM' with obstacle at '0,3'`, () => {
+                const obstacles = Obstacle.fromPosition(
+                    Position.fromCoordinates(0, 3)
+                )
+                const plateau = Plateau.fromGridAndObstacles(grid, [
+                    obstacles,
+                ])
+                const rover = new Rover(plateau)
+
+                expect(rover.navigate('MMMM')).toEqual('Err:0:2:N')
             })
         })
     })

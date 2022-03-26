@@ -75,10 +75,16 @@ export class RoverState {
         Direction.fromLetter(DirectionLetter.N)
     )
 
-    constructor(readonly position: Position, readonly direction: Direction) {}
+    constructor(
+        readonly position: Position,
+        readonly direction: Direction,
+        readonly error = false
+    ) {}
 
     format = (): string =>
-        `${this.position.format()}:${this.direction.format()}`
+        `${
+            this.error ? 'Err:' : ''
+        }${this.position.format()}:${this.direction.format()}`
 }
 
 interface CommandExecutor {
@@ -93,8 +99,9 @@ class MoveForward implements CommandExecutor {
             return roverState
         }
 
-        const currentX = roverState.position.x
-        const currentY = roverState.position.y
+        const currentPosition = roverState.position
+        const currentX = currentPosition.x
+        const currentY = currentPosition.y
 
         let unWrappedNextPosition: Position
 
@@ -128,11 +135,21 @@ class MoveForward implements CommandExecutor {
                 break
             }
         }
+        const wrappedNextPosition = this.wrapAround(unWrappedNextPosition)
+        const collidesWithObstacle =
+            this.collidesWithObstacle(wrappedNextPosition)
+
         return new RoverState(
-            this.wrapAround(unWrappedNextPosition),
-            roverState.direction
+            collidesWithObstacle ? currentPosition : wrappedNextPosition,
+            roverState.direction,
+            collidesWithObstacle
         )
     }
+
+    private collidesWithObstacle = (position: Position) =>
+        !!this.plateau.obstacles.find(
+            (obstacle) => obstacle.position.x === position.x && obstacle.position.y === position.y
+        )
 
     private wrapAround = (unWrappedPosition: Position) =>
         Position.fromCoordinates(
@@ -161,7 +178,8 @@ abstract class Rotate {
         }
         return new RoverState(
             roverState.position,
-            this.rotate(roverState.direction)
+            this.rotate(roverState.direction),
+            roverState.error
         )
     }
 
@@ -220,10 +238,12 @@ class Rover {
 
         commands.forEach((command) => {
             commandExecutors.forEach((commandExecutor) => {
-                this.roverState = commandExecutor.execute(
-                    command,
-                    this.roverState
-                )
+                if (!this.roverState.error) {
+                    this.roverState = commandExecutor.execute(
+                        command,
+                        this.roverState
+                    )
+                }
             })
         })
 
