@@ -2,6 +2,7 @@ import Rover, {
     Direction,
     DirectionLetter,
     Grid,
+    Plateau,
     Position,
     RoverState,
 } from './mars-rover'
@@ -33,7 +34,7 @@ describe('Mars Rover should', () => {
 
     describe('move forward', () => {
         describe('not wrapping around edges', () => {
-            const grid = Grid.fromDimensions(10, 10)
+            const plateau = Plateau.fromGrid(Grid.fromDimensions(10, 10))
             const position = Position.fromCoordinates(5, 5)
 
             it.each([
@@ -48,7 +49,7 @@ describe('Mars Rover should', () => {
                         position,
                         Direction.fromString(directionLetter)
                     )
-                    const rover = new Rover(grid, roverState)
+                    const rover = new Rover(plateau, roverState)
 
                     expect(rover.navigate('M')).toEqual(expected)
                 }
@@ -56,7 +57,7 @@ describe('Mars Rover should', () => {
         })
 
         describe('wrapping around edges', () => {
-            const grid = Grid.fromDimensions(2, 2)
+            const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
             const position = Position.fromCoordinates(0, 0)
 
             it.each([
@@ -71,7 +72,7 @@ describe('Mars Rover should', () => {
                         position,
                         Direction.fromString(directionLetter)
                     )
-                    const rover = new Rover(grid, roverState)
+                    const rover = new Rover(plateau, roverState)
 
                     expect(rover.navigate('M')).toEqual(expected)
                 }
@@ -81,7 +82,7 @@ describe('Mars Rover should', () => {
 
     describe('rotate', () => {
         describe('left', () => {
-            const grid = Grid.fromDimensions(2, 2)
+            const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
             const position = Position.fromCoordinates(0, 0)
 
             it.each([
@@ -94,14 +95,14 @@ describe('Mars Rover should', () => {
                     position,
                     Direction.fromString(directionLetter)
                 )
-                const rover = new Rover(grid, roverState)
+                const rover = new Rover(plateau, roverState)
 
                 expect(rover.navigate('L')).toEqual(expected)
             })
         })
 
         describe('right', () => {
-            const grid = Grid.fromDimensions(2, 2)
+            const plateau = Plateau.fromGrid(Grid.fromDimensions(2, 2))
             const position = Position.fromCoordinates(0, 0)
 
             it.each([
@@ -114,7 +115,7 @@ describe('Mars Rover should', () => {
                     position,
                     Direction.fromString(directionLetter)
                 )
-                const rover = new Rover(grid, roverState)
+                const rover = new Rover(plateau, roverState)
 
                 expect(rover.navigate('R')).toEqual(expected)
             })

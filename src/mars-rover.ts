@@ -34,6 +34,13 @@ export class Position {
     format = (): string => `${this.x}:${this.y}`
 }
 
+export class Obstacle {
+    static readonly fromPosition = (position: Position) =>
+        new Obstacle(position)
+
+    private constructor(readonly position: Position) {}
+}
+
 export class Grid {
     static readonly DEFAULT_GRID = new Grid(10, 10)
 
@@ -41,6 +48,25 @@ export class Grid {
         new Grid(width, height)
 
     private constructor(readonly width: number, readonly height: number) {}
+}
+
+export class Plateau {
+    static readonly DEFAULT_PLATEAU = new Plateau(Grid.DEFAULT_GRID, [])
+
+    static readonly fromGrid = (grid: Grid) => new Plateau(grid, undefined)
+
+    static readonly fromObstacles = (obstacles: Obstacle[]) =>
+        new Plateau(undefined, obstacles)
+
+    static readonly fromGridAndObstacles = (
+        grid: Grid,
+        obstacles: Obstacle[]
+    ) => new Plateau(grid, obstacles)
+
+    private constructor(
+        readonly grid: Grid = Grid.DEFAULT_GRID,
+        readonly obstacles: Obstacle[] = []
+    ) {}
 }
 
 export class RoverState {
@@ -60,7 +86,7 @@ interface CommandExecutor {
 }
 
 class MoveForward implements CommandExecutor {
-    constructor(private readonly grid: Grid) {}
+    constructor(private readonly plateau: Plateau) {}
 
     execute(command: Command, roverState: RoverState): RoverState {
         if (command !== 'M') {
@@ -115,10 +141,10 @@ class MoveForward implements CommandExecutor {
         )
 
     private wrapAroundGridWidth = (coordinate: Coordinate): Coordinate =>
-        this.applyModuloOperation(coordinate, this.grid.width)
+        this.applyModuloOperation(coordinate, this.plateau.grid.width)
 
     private wrapAroundGridHeight = (coordinate: Coordinate): Coordinate =>
-        this.applyModuloOperation(coordinate, this.grid.height)
+        this.applyModuloOperation(coordinate, this.plateau.grid.height)
 
     private applyModuloOperation = (
         coordinate: Coordinate,
@@ -171,7 +197,7 @@ class RotateRight extends Rotate implements CommandExecutor {
 
 class Rover {
     constructor(
-        private grid = Grid.DEFAULT_GRID,
+        private plateau = Plateau.DEFAULT_PLATEAU,
         private roverState = RoverState.STARTING_STATE
     ) {}
 
@@ -187,7 +213,7 @@ class Rover {
 
     private execute = (commands: Command[]): string => {
         const commandExecutors = [
-            new MoveForward(this.grid),
+            new MoveForward(this.plateau),
             new RotateLeft(),
             new RotateRight(),
         ]
