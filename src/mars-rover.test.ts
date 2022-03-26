@@ -1,21 +1,10 @@
-import Rover, {
-    Direction,
-    DirectionLetter,
-    Grid,
-    Obstacle,
-    Plateau,
-    Position,
-    RoverState,
-} from './mars-rover'
+import Rover, { Direction, DirectionLetter, Grid, Obstacle, Plateau, Position, RoverState } from './mars-rover'
 
 describe('Mars Rover should', () => {
     describe('stay', () => {
-        it.each([null, undefined])(
-            `in start position if command is %s`,
-            (input) => {
-                expect(new Rover().navigate(input)).toEqual('0:0:N')
-            }
-        )
+        it.each([null, undefined])(`in start position if command is %s`, (input) => {
+            expect(new Rover().navigate(input)).toEqual('0:0:N')
+        })
     })
 
     describe('start', () => {
@@ -43,18 +32,12 @@ describe('Mars Rover should', () => {
                 ['W', '4:5:W'],
                 ['E', '6:5:E'],
                 ['S', '5:4:S'],
-            ])(
-                `one step in direction %s`,
-                (directionLetter: string, expected: string) => {
-                    const roverState = new RoverState(
-                        roverPosition,
-                        Direction.fromString(directionLetter)
-                    )
-                    const rover = new Rover(plateau, roverState)
+            ])(`one step in direction %s`, (directionLetter: string, expected: string) => {
+                const roverState = new RoverState(roverPosition, Direction.fromString(directionLetter))
+                const rover = new Rover(plateau, roverState)
 
-                    expect(rover.navigate('M')).toEqual(expected)
-                }
-            )
+                expect(rover.navigate('M')).toEqual(expected)
+            })
         })
 
         describe('wrapping around edges', () => {
@@ -66,18 +49,12 @@ describe('Mars Rover should', () => {
                 ['W', '1:0:W'],
                 ['E', '1:0:E'],
                 ['S', '0:1:S'],
-            ])(
-                `one step in direction %s`,
-                (directionLetter: string, expected: string) => {
-                    const roverState = new RoverState(
-                        roverPosition,
-                        Direction.fromString(directionLetter)
-                    )
-                    const rover = new Rover(plateau, roverState)
+            ])(`one step in direction %s`, (directionLetter: string, expected: string) => {
+                const roverState = new RoverState(roverPosition, Direction.fromString(directionLetter))
+                const rover = new Rover(plateau, roverState)
 
-                    expect(rover.navigate('M')).toEqual(expected)
-                }
-            )
+                expect(rover.navigate('M')).toEqual(expected)
+            })
         })
     })
 
@@ -92,10 +69,7 @@ describe('Mars Rover should', () => {
                 ['E', '0:0:N'],
                 ['S', '0:0:E'],
             ])(`facing %s`, (directionLetter: string, expected: string) => {
-                const roverState = new RoverState(
-                    position,
-                    Direction.fromString(directionLetter)
-                )
+                const roverState = new RoverState(position, Direction.fromString(directionLetter))
                 const rover = new Rover(plateau, roverState)
 
                 expect(rover.navigate('L')).toEqual(expected)
@@ -109,10 +83,7 @@ describe('Mars Rover should', () => {
                 ['E', '0:0:S'],
                 ['S', '0:0:W'],
             ])(`facing %s`, (directionLetter: string, expected: string) => {
-                const roverState = new RoverState(
-                    position,
-                    Direction.fromString(directionLetter)
-                )
+                const roverState = new RoverState(position, Direction.fromString(directionLetter))
                 const rover = new Rover(plateau, roverState)
 
                 expect(rover.navigate('R')).toEqual(expected)
@@ -128,11 +99,7 @@ describe('Mars Rover should', () => {
 
     describe('stop', () => {
         test('in front of an obstacle', () => {
-            const rover = new Rover(
-                Plateau.fromObstacles([
-                    Obstacle.fromPosition(Position.fromCoordinates(0, 2)),
-                ])
-            )
+            const rover = new Rover(Plateau.fromObstacles([Obstacle.fromPosition(Position.fromCoordinates(0, 2))]))
 
             expect(rover.navigate('MM')).toEqual('Err:0:1:N')
         })
@@ -159,12 +126,8 @@ describe('Mars Rover should', () => {
             })
 
             test(`'MMMM' with obstacle at '0,3'`, () => {
-                const obstacles = Obstacle.fromPosition(
-                    Position.fromCoordinates(0, 3)
-                )
-                const plateau = Plateau.fromGridAndObstacles(grid, [
-                    obstacles,
-                ])
+                const obstacles = Obstacle.fromPosition(Position.fromCoordinates(0, 3))
+                const plateau = Plateau.fromGridAndObstacles(grid, [obstacles])
                 const rover = new Rover(plateau)
 
                 expect(rover.navigate('MMMM')).toEqual('Err:0:2:N')

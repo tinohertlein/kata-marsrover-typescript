@@ -10,63 +10,50 @@ export enum DirectionLetter {
 }
 
 export class Direction {
-    static readonly numberOfDirections =
-        Object.entries(DirectionLetter).length / 2
-
-    static readonly fromString = (directionLetter: string) =>
-        new Direction(
-            DirectionLetter[directionLetter as keyof typeof DirectionLetter]
-        )
-    static readonly fromLetter = (directionLetter: DirectionLetter) =>
-        new Direction(directionLetter)
+    static readonly numberOfDirections = Object.entries(DirectionLetter).length / 2
 
     private constructor(readonly letter: DirectionLetter) {}
+
+    static readonly fromString = (directionLetter: string) =>
+        new Direction(DirectionLetter[directionLetter as keyof typeof DirectionLetter])
+
+    static readonly fromLetter = (directionLetter: DirectionLetter) => new Direction(directionLetter)
 
     format = (): string => `${DirectionLetter[this.letter]}`
 }
 
 export class Position {
-    static readonly fromCoordinates = (x: Coordinate, y: Coordinate) =>
-        new Position(x, y)
-
     private constructor(readonly x: Coordinate, readonly y: Coordinate) {}
+
+    static readonly fromCoordinates = (x: Coordinate, y: Coordinate) => new Position(x, y)
 
     format = (): string => `${this.x}:${this.y}`
 }
 
 export class Obstacle {
-    static readonly fromPosition = (position: Position) =>
-        new Obstacle(position)
-
     private constructor(readonly position: Position) {}
+
+    static readonly fromPosition = (position: Position) => new Obstacle(position)
 }
 
 export class Grid {
     static readonly DEFAULT_GRID = new Grid(10, 10)
 
-    static readonly fromDimensions = (width: number, height: number) =>
-        new Grid(width, height)
-
     private constructor(readonly width: number, readonly height: number) {}
+
+    static readonly fromDimensions = (width: number, height: number) => new Grid(width, height)
 }
 
 export class Plateau {
     static readonly DEFAULT_PLATEAU = new Plateau(Grid.DEFAULT_GRID, [])
 
+    private constructor(readonly grid: Grid = Grid.DEFAULT_GRID, readonly obstacles: Obstacle[] = []) {}
+
     static readonly fromGrid = (grid: Grid) => new Plateau(grid, undefined)
 
-    static readonly fromObstacles = (obstacles: Obstacle[]) =>
-        new Plateau(undefined, obstacles)
+    static readonly fromObstacles = (obstacles: Obstacle[]) => new Plateau(undefined, obstacles)
 
-    static readonly fromGridAndObstacles = (
-        grid: Grid,
-        obstacles: Obstacle[]
-    ) => new Plateau(grid, obstacles)
-
-    private constructor(
-        readonly grid: Grid = Grid.DEFAULT_GRID,
-        readonly obstacles: Obstacle[] = []
-    ) {}
+    static readonly fromGridAndObstacles = (grid: Grid, obstacles: Obstacle[]) => new Plateau(grid, obstacles)
 }
 
 export class RoverState {
@@ -75,16 +62,9 @@ export class RoverState {
         Direction.fromLetter(DirectionLetter.N)
     )
 
-    constructor(
-        readonly position: Position,
-        readonly direction: Direction,
-        readonly error = false
-    ) {}
+    constructor(readonly position: Position, readonly direction: Direction, readonly error = false) {}
 
-    format = (): string =>
-        `${
-            this.error ? 'Err:' : ''
-        }${this.position.format()}:${this.direction.format()}`
+    format = (): string => `${this.error ? 'Err:' : ''}${this.position.format()}:${this.direction.format()}`
 }
 
 interface CommandExecutor {
@@ -107,37 +87,24 @@ class MoveForward implements CommandExecutor {
 
         switch (roverState.direction.letter) {
             case DirectionLetter.N: {
-                unWrappedNextPosition = Position.fromCoordinates(
-                    currentX,
-                    currentY + 1
-                )
+                unWrappedNextPosition = Position.fromCoordinates(currentX, currentY + 1)
                 break
             }
             case DirectionLetter.E: {
-                unWrappedNextPosition = Position.fromCoordinates(
-                    currentX + 1,
-                    currentY
-                )
+                unWrappedNextPosition = Position.fromCoordinates(currentX + 1, currentY)
                 break
             }
             case DirectionLetter.S: {
-                unWrappedNextPosition = Position.fromCoordinates(
-                    currentX,
-                    currentY - 1
-                )
+                unWrappedNextPosition = Position.fromCoordinates(currentX, currentY - 1)
                 break
             }
             case DirectionLetter.W: {
-                unWrappedNextPosition = Position.fromCoordinates(
-                    currentX - 1,
-                    currentY
-                )
+                unWrappedNextPosition = Position.fromCoordinates(currentX - 1, currentY)
                 break
             }
         }
         const wrappedNextPosition = this.wrapAround(unWrappedNextPosition)
-        const collidesWithObstacle =
-            this.collidesWithObstacle(wrappedNextPosition)
+        const collidesWithObstacle = this.collidesWithObstacle(wrappedNextPosition)
 
         return new RoverState(
             collidesWithObstacle ? currentPosition : wrappedNextPosition,
@@ -163,10 +130,8 @@ class MoveForward implements CommandExecutor {
     private wrapAroundGridHeight = (coordinate: Coordinate): Coordinate =>
         this.applyModuloOperation(coordinate, this.plateau.grid.height)
 
-    private applyModuloOperation = (
-        coordinate: Coordinate,
-        max: Coordinate
-    ): Coordinate => (coordinate + max) % max
+    private applyModuloOperation = (coordinate: Coordinate, max: Coordinate): Coordinate =>
+        (coordinate + max) % max
 }
 
 abstract class Rotate {
@@ -176,18 +141,13 @@ abstract class Rotate {
         if (command !== this.rotateCommand) {
             return roverState
         }
-        return new RoverState(
-            roverState.position,
-            this.rotate(roverState.direction),
-            roverState.error
-        )
+        return new RoverState(roverState.position, this.rotate(roverState.direction), roverState.error)
     }
 
     protected abstract rotateLeftOrRight(direction: number): number
 
     private rotate = (direction: Direction): Direction => {
-        const nextDirectionLetter =
-            DirectionLetter[this.rotateLeftOrRight(direction.letter)]
+        const nextDirectionLetter = DirectionLetter[this.rotateLeftOrRight(direction.letter)]
 
         return Direction.fromString(nextDirectionLetter)
     }
@@ -199,8 +159,7 @@ class RotateLeft extends Rotate implements CommandExecutor {
     }
 
     rotateLeftOrRight = (direction: number): number =>
-        (Direction.numberOfDirections + direction - 1) %
-        Direction.numberOfDirections
+        (Direction.numberOfDirections + direction - 1) % Direction.numberOfDirections
 }
 
 class RotateRight extends Rotate implements CommandExecutor {
@@ -209,40 +168,27 @@ class RotateRight extends Rotate implements CommandExecutor {
     }
 
     rotateLeftOrRight = (direction: number): number =>
-        (Direction.numberOfDirections + direction + 1) %
-        Direction.numberOfDirections
+        (Direction.numberOfDirections + direction + 1) % Direction.numberOfDirections
 }
 
 class Rover {
-    constructor(
-        private plateau = Plateau.DEFAULT_PLATEAU,
-        private roverState = RoverState.STARTING_STATE
-    ) {}
+    constructor(private plateau = Plateau.DEFAULT_PLATEAU, private roverState = RoverState.STARTING_STATE) {}
 
     navigate = (input: string | undefined | null): string => {
         const toCommand = (character: string) => character as Command
 
-        const commands = (input || '')
-            .split('')
-            .map((character) => toCommand(character))
+        const commands = (input || '').split('').map((character) => toCommand(character))
 
         return this.execute(commands)
     }
 
     private execute = (commands: Command[]): string => {
-        const commandExecutors = [
-            new MoveForward(this.plateau),
-            new RotateLeft(),
-            new RotateRight(),
-        ]
+        const commandExecutors = [new MoveForward(this.plateau), new RotateLeft(), new RotateRight()]
 
         commands.forEach((command) => {
             commandExecutors.forEach((commandExecutor) => {
                 if (!this.roverState.error) {
-                    this.roverState = commandExecutor.execute(
-                        command,
-                        this.roverState
-                    )
+                    this.roverState = commandExecutor.execute(command, this.roverState)
                 }
             })
         })
