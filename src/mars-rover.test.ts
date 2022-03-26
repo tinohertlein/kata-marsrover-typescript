@@ -2,7 +2,7 @@ import Rover, { Direction, DirectionLetter, Grid, Obstacle, Plateau, Position, R
 
 describe('Mars Rover should', () => {
     describe('stay', () => {
-        it.each([null, undefined])(`in start position if command is %s`, (input) => {
+        it.each([null, undefined])(`in starting state if command is %s`, (input) => {
             expect(new Rover().navigate(input)).toEqual('0:0:N')
         })
     })
