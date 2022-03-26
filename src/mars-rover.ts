@@ -1,6 +1,7 @@
 const modulo = (n1: number, n2: number): number => (n1 + n2) % n2
 
 type Command = 'M' | 'L' | 'R'
+
 export type Coordinate = number
 
 export enum DirectionLetter {
@@ -73,11 +74,11 @@ interface CommandExecutor {
     execute: (command: Command, roverState: RoverState) => RoverState
 }
 
-class MoveForward implements CommandExecutor {
-    constructor(private readonly plateau: Plateau) {}
+class Move implements CommandExecutor {
+    constructor(private readonly moveCommand: Command, private readonly plateau: Plateau) {}
 
     execute(command: Command, roverState: RoverState): RoverState {
-        if (command !== 'M') {
+        if (command !== this.moveCommand) {
             return roverState
         }
 
@@ -106,13 +107,9 @@ class MoveForward implements CommandExecutor {
             }
         }
         const wrappedNextPosition = this.wrapAround(unWrappedNextPosition)
-        const collidesWithObstacle = this.collidesWithObstacle(wrappedNextPosition)
+        const error = this.collidesWithObstacle(wrappedNextPosition)
 
-        return new RoverState(
-            collidesWithObstacle ? currentPosition : wrappedNextPosition,
-            roverState.direction,
-            collidesWithObstacle
-        )
+        return new RoverState(error ? currentPosition : wrappedNextPosition, roverState.direction, error)
     }
 
     private collidesWithObstacle = (position: Position) =>
@@ -133,8 +130,8 @@ class MoveForward implements CommandExecutor {
         modulo(coordinate, this.plateau.grid.height)
 }
 
-abstract class Rotate {
-    protected constructor(readonly rotateCommand: Command) {}
+class Rotate implements CommandExecutor {
+    constructor(readonly rotateCommand: Command, readonly leftOrRight: (direction: number) => number) {}
 
     execute(command: Command, roverState: RoverState): RoverState {
         if (command !== this.rotateCommand) {
@@ -143,47 +140,29 @@ abstract class Rotate {
         return new RoverState(roverState.position, this.rotate(roverState.direction), roverState.error)
     }
 
-    protected abstract rotateLeftOrRight(direction: number): number
-
     private rotate = (direction: Direction): Direction => {
         const nextDirectionLetter =
-            DirectionLetter[
-                modulo(this.rotateLeftOrRight(direction.letter), Direction.numberOfDirections)
-            ]
+            DirectionLetter[modulo(this.leftOrRight(direction.letter), Direction.numberOfDirections)]
 
         return Direction.fromString(nextDirectionLetter)
     }
 }
 
-class RotateLeft extends Rotate implements CommandExecutor {
-    constructor() {
-        super('L')
-    }
-
-    rotateLeftOrRight = (direction: number): number => direction - 1
-}
-
-class RotateRight extends Rotate implements CommandExecutor {
-    constructor() {
-        super('R')
-    }
-
-    rotateLeftOrRight = (direction: number): number => direction + 1
-}
-
 class Rover {
-    constructor(private plateau = Plateau.DEFAULT_PLATEAU, private roverState = RoverState.STARTING_STATE) {}
+    constructor(
+        private readonly plateau = Plateau.DEFAULT_PLATEAU,
+        private roverState = RoverState.STARTING_STATE
+    ) {}
 
-    navigate = (input: string | undefined | null): string => {
-        const toCommand = (character: string) => character as Command
-
-        const commands = (input || '').split('').map((character) => toCommand(character))
-
-        return this.execute(commands)
-    }
+    navigate = (input: string | undefined | null): string =>
+        this.execute((input || '').split('').map((character) => character as Command))
 
     private execute = (commands: Command[]): string => {
-        const commandExecutors = [new MoveForward(this.plateau), new RotateLeft(), new RotateRight()]
+        const commandExecutors = [
+            new Move('M', this.plateau),
+            new Rotate('L', (direction) => direction - 1),
+            new Rotate('R', (direction) => direction + 1),
+        ]
 
         commands.forEach((command) => {
             commandExecutors.forEach((commandExecutor) => {
