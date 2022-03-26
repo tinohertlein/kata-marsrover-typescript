@@ -1,3 +1,5 @@
+const modulo = (n1: number, n2: number): number => (n1 + n2) % n2
+
 type Command = 'M' | 'L' | 'R'
 export type Coordinate = number
 
@@ -125,13 +127,10 @@ class MoveForward implements CommandExecutor {
         )
 
     private wrapAroundGridWidth = (coordinate: Coordinate): Coordinate =>
-        this.applyModuloOperation(coordinate, this.plateau.grid.width)
+        modulo(coordinate, this.plateau.grid.width)
 
     private wrapAroundGridHeight = (coordinate: Coordinate): Coordinate =>
-        this.applyModuloOperation(coordinate, this.plateau.grid.height)
-
-    private applyModuloOperation = (coordinate: Coordinate, max: Coordinate): Coordinate =>
-        (coordinate + max) % max
+        modulo(coordinate, this.plateau.grid.height)
 }
 
 abstract class Rotate {
@@ -147,7 +146,10 @@ abstract class Rotate {
     protected abstract rotateLeftOrRight(direction: number): number
 
     private rotate = (direction: Direction): Direction => {
-        const nextDirectionLetter = DirectionLetter[this.rotateLeftOrRight(direction.letter)]
+        const nextDirectionLetter =
+            DirectionLetter[
+                modulo(this.rotateLeftOrRight(direction.letter), Direction.numberOfDirections)
+            ]
 
         return Direction.fromString(nextDirectionLetter)
     }
@@ -158,8 +160,7 @@ class RotateLeft extends Rotate implements CommandExecutor {
         super('L')
     }
 
-    rotateLeftOrRight = (direction: number): number =>
-        (Direction.numberOfDirections + direction - 1) % Direction.numberOfDirections
+    rotateLeftOrRight = (direction: number): number => direction - 1
 }
 
 class RotateRight extends Rotate implements CommandExecutor {
@@ -167,8 +168,7 @@ class RotateRight extends Rotate implements CommandExecutor {
         super('R')
     }
 
-    rotateLeftOrRight = (direction: number): number =>
-        (Direction.numberOfDirections + direction + 1) % Direction.numberOfDirections
+    rotateLeftOrRight = (direction: number): number => direction + 1
 }
 
 class Rover {
