@@ -1,0 +1,41 @@
+on:
+  push:
+    branches: [ master ]
+
+env:
+  NODE_VERSION: '16'
+  WORKING_DIR: '${{ github.workspace }}'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache Node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install, test & lint with npm
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          npm ci
+          npm run test
+          npm run lint
