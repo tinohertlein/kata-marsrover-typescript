@@ -18,7 +18,7 @@ export class Direction {
     private constructor(readonly letter: DirectionLetter) {}
 
     static readonly fromString = (directionLetter: string) =>
-        new Direction(DirectionLetter[directionLetter as keyof typeof DirectionLetter])
+        Direction.fromLetter(DirectionLetter[directionLetter as keyof typeof DirectionLetter])
 
     static readonly fromLetter = (directionLetter: DirectionLetter) => new Direction(directionLetter)
 
@@ -62,12 +62,13 @@ export class Plateau {
 export class RoverState {
     static readonly STARTING_STATE = new RoverState(
         Position.fromCoordinates(0, 0),
-        Direction.fromLetter(DirectionLetter.N)
+        Direction.fromLetter(DirectionLetter.N),
+        false
     )
 
-    constructor(readonly position: Position, readonly direction: Direction, readonly error = false) {}
+    constructor(readonly position: Position, readonly direction: Direction, readonly hasError = false) {}
 
-    format = (): string => `${this.error ? 'Err:' : ''}${this.position.format()}:${this.direction.format()}`
+    format = (): string => `${this.hasError ? 'Err:' : ''}${this.position.format()}:${this.direction.format()}`
 }
 
 interface CommandExecutor {
@@ -86,30 +87,30 @@ class Move implements CommandExecutor {
         const currentX = currentPosition.x
         const currentY = currentPosition.y
 
-        let unWrappedNextPosition: Position
+        let nextPosition: Position
 
         switch (roverState.direction.letter) {
             case DirectionLetter.N: {
-                unWrappedNextPosition = Position.fromCoordinates(currentX, currentY + 1)
+                nextPosition = Position.fromCoordinates(currentX, currentY + 1)
                 break
             }
             case DirectionLetter.E: {
-                unWrappedNextPosition = Position.fromCoordinates(currentX + 1, currentY)
+                nextPosition = Position.fromCoordinates(currentX + 1, currentY)
                 break
             }
             case DirectionLetter.S: {
-                unWrappedNextPosition = Position.fromCoordinates(currentX, currentY - 1)
+                nextPosition = Position.fromCoordinates(currentX, currentY - 1)
                 break
             }
             case DirectionLetter.W: {
-                unWrappedNextPosition = Position.fromCoordinates(currentX - 1, currentY)
+                nextPosition = Position.fromCoordinates(currentX - 1, currentY)
                 break
             }
         }
-        const wrappedNextPosition = this.wrapAround(unWrappedNextPosition)
-        const error = this.collidesWithObstacle(wrappedNextPosition)
+        const wrappedAroundNextPosition = this.wrapAround(nextPosition)
+        const isError = this.collidesWithObstacle(wrappedAroundNextPosition)
 
-        return new RoverState(error ? currentPosition : wrappedNextPosition, roverState.direction, error)
+        return new RoverState(isError ? currentPosition : wrappedAroundNextPosition, roverState.direction, isError)
     }
 
     private collidesWithObstacle = (position: Position) =>
@@ -119,15 +120,9 @@ class Move implements CommandExecutor {
 
     private wrapAround = (unWrappedPosition: Position) =>
         Position.fromCoordinates(
-            this.wrapAroundGridWidth(unWrappedPosition.x),
-            this.wrapAroundGridHeight(unWrappedPosition.y)
+            modulo(unWrappedPosition.x, this.plateau.grid.width),
+            modulo(unWrappedPosition.y, this.plateau.grid.height)
         )
-
-    private wrapAroundGridWidth = (coordinate: Coordinate): Coordinate =>
-        modulo(coordinate, this.plateau.grid.width)
-
-    private wrapAroundGridHeight = (coordinate: Coordinate): Coordinate =>
-        modulo(coordinate, this.plateau.grid.height)
 }
 
 class Rotate implements CommandExecutor {
@@ -137,7 +132,7 @@ class Rotate implements CommandExecutor {
         if (command !== this.rotateCommand) {
             return roverState
         }
-        return new RoverState(roverState.position, this.rotate(roverState.direction), roverState.error)
+        return new RoverState(roverState.position, this.rotate(roverState.direction), roverState.hasError)
     }
 
     private rotate = (direction: Direction): Direction => {
@@ -166,7 +161,7 @@ class Rover {
 
         commands.forEach((command) => {
             commandExecutors.forEach((commandExecutor) => {
-                if (!this.roverState.error) {
+                if (!this.roverState.hasError) {
                     this.roverState = commandExecutor.execute(command, this.roverState)
                 }
             })
